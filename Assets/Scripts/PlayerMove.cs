@@ -7,6 +7,7 @@ public class PlayerMove : MonoBehaviour
 
     public float speed;
     public float jumpSpeed;
+    bool onGround = true;
     float hmove;
     Rigidbody2D rb;
 
@@ -29,9 +30,15 @@ public class PlayerMove : MonoBehaviour
     }
     void CheckJump()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && onGround)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpSpeed);
+            onGround = false;
         }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        onGround = true;
     }
 }
