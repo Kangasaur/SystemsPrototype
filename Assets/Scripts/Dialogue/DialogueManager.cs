@@ -6,13 +6,20 @@ using Ink.Runtime;
 
 public class DialogueManager : MonoBehaviour
 {
+    [Header("Params")]
+    [SerializeField] private float typingSpeed = 0.04f; 
+
     [Header("Dialogue UI")]
     [SerializeField] private GameObject dialoguePanel;
     [SerializeField] private TextMeshProUGUI dialogueText;
 
     private Story currentStory;
 
-    private bool dialogueIsPlaying;
+    public bool dialogueIsPlaying { get; private set; }
+
+    private bool canContinueToNextLine = false;
+
+    private Coroutine displayLineCoroutine;
 
     private static DialogueManager instance;
 
@@ -43,7 +50,7 @@ public class DialogueManager : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.F))
+        if (canContinueToNextLine && Input.GetKeyDown(KeyCode.Space))
         {
             ContinueStory();
         }
@@ -58,8 +65,10 @@ public class DialogueManager : MonoBehaviour
         ContinueStory();
     }
 
-    private void ExitDialogueMode()
+    private IEnumerator ExitDialogueMode()
     {
+        yield return new WaitForSeconds(0.2f);
+
         dialogueIsPlaying = false;
         dialoguePanel.SetActive(false);
         dialogueText.text = " ";
@@ -69,11 +78,37 @@ public class DialogueManager : MonoBehaviour
     {
         if (currentStory.canContinue)
         {
-            dialogueText.text = currentStory.Continue();
+            if(displayLineCoroutine != null)
+            {
+                StopCoroutine(displayLineCoroutine);
+            }
+            displayLineCoroutine = StartCoroutine(DisplayLine(currentStory.Continue()));
         }
         else
         {
-            ExitDialogueMode();
+            StartCoroutine(ExitDialogueMode());
         }
+    }
+
+    private IEnumerator DisplayLine(string line)
+    {
+        dialogueText.text = " ";
+
+        canContinueToNextLine = false;
+
+        foreach (char letter in line.ToCharArray())
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                dialogueText.text = line;
+                break;
+            }
+
+            dialogueText.text += letter;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        canContinueToNextLine = true;
+
     }
 }
